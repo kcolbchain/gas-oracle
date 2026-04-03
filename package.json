@@ -1,0 +1,26 @@
+{
+  "name": "@kcolbchain/gas-oracle",
+  "version": "0.1.0",
+  "description": "Predicts L2 gas costs 5-30 blocks ahead using blob fee market dynamics post-EIP-4844",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": { "gas-oracle": "dist/cli.js" },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/cli.js",
+    "test": "vitest run",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": ["ethereum", "gas", "l2", "blob", "eip-4844", "arbitrum", "optimism", "base"],
+  "author": "kcolbchain <krishna@kcolbchain.com>",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^12.0.0",
+    "viem": "^2.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "vitest": "^1.0.0"
+  }
+}
