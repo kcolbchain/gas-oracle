@@ -1,6 +1,6 @@
 {
   "name": "@kcolbchain/gas-oracle",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Predicts L2 gas costs 5-30 blocks ahead using blob fee market dynamics post-EIP-4844",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
