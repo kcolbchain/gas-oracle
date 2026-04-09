@@ -12,6 +12,7 @@ After EIP-4844, L2 transaction costs are driven by the L1 blob base fee — a vo
 - Optimism
 - Base
 - Scroll
+- zkSync Era
 
 ## Quick start
 
