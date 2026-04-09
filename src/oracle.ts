@@ -3,9 +3,10 @@ import { Predictor } from './predictor'
 import { arbitrum } from './chains/arbitrum'
 import { optimism, base } from './chains/optimism'
 import { scroll } from './chains/scroll'
+import { zksync } from './chains/zksync'
 import type { OracleConfig, Prediction, ChainAdapter, ChainName } from './types'
 
-const adapters: Record<ChainName, ChainAdapter> = { arbitrum, optimism, base, scroll }
+const adapters: Record<ChainName, ChainAdapter> = { arbitrum, optimism, base, scroll, zksync }
 
 export class GasOracle {
   private fetcher: FeeFetcher
