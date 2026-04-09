@@ -12,7 +12,7 @@
     "test": "vitest run",
     "lint": "tsc --noEmit"
   },
-  "keywords": ["ethereum", "gas", "l2", "blob", "eip-4844", "arbitrum", "optimism", "base"],
+  "keywords": ["ethereum", "gas", "l2", "blob", "eip-4844", "arbitrum", "optimism", "base", "scroll", "zksync"],
   "author": "kcolbchain <krishna@kcolbchain.com>",
   "license": "MIT",
   "dependencies": {
