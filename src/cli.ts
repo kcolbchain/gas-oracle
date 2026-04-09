@@ -13,7 +13,7 @@ program
 program
   .command('predict')
   .description('Predict gas costs N blocks ahead')
-  .requiredOption('--chain <chain>', 'Target chain: arbitrum, optimism, base, scroll')
+  .requiredOption('--chain <chain>', 'Target chain: arbitrum, optimism, base, scroll, zksync')
   .option('--blocks <n>', 'Blocks ahead to predict', '10')
   .option('--l1-rpc <url>', 'L1 Ethereum RPC URL', 'https://eth.llamarpc.com')
   .option('--l2-rpc <url>', 'L2 RPC URL')
@@ -25,6 +25,7 @@ program
       optimism: 'https://mainnet.optimism.io',
       base: 'https://mainnet.base.org',
       scroll: 'https://rpc.scroll.io',
+      zksync: 'https://mainnet.era.zksync.io',
     }
 
     const oracle = new GasOracle({
