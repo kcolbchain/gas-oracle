@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>gas-oracle — live L2 gas dashboard</title>
+<meta name="description" content="Live L2 gas prices and blob-fee predictions for Arbitrum, Optimism, Base, Scroll. By kcolbchain." />
+<style>
+  :root {
+    --bg: #0b0d10;
+    --panel: #13161b;
+    --border: #23272f;
+    --fg: #e7e9ee;
+    --muted: #8a93a3;
+    --accent: #7dd3fc;
+    --ok: #34d399;
+    --warn: #fbbf24;
+    --hot: #f87171;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  header { padding: 24px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  header h1 { margin: 0; font-size: 20px; letter-spacing: -0.01em; }
+  header h1 .dot { color: var(--accent); }
+  header p { margin: 0; color: var(--muted); font-size: 13px; }
+  main { padding: 24px 32px; max-width: 1200px; margin: 0 auto; }
+  .l1-bar { display: flex; gap: 24px; padding: 16px 20px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+  .l1-bar .metric { display: flex; flex-direction: column; gap: 2px; }
+  .l1-bar .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .l1-bar .value { font-family: var(--mono); font-size: 18px; }
+  .l1-bar .value.hot { color: var(--hot); }
+  .l1-bar .value.warn { color: var(--warn); }
+  .l1-bar .value.ok { color: var(--ok); }
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .card header { padding: 0; border: 0; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; justify-content: space-between; }
+  .card h2 { margin: 0; font-size: 15px; letter-spacing: -0.005em; }
+  .chip { font-family: var(--mono); font-size: 11px; padding: 2px 8px; border-radius: 999px; background: #1f232b; color: var(--muted); }
+  .chip.live { color: var(--ok); background: #0e2a1e; }
+  .chip.err { color: var(--hot); background: #2a1212; }
+  .row { display: flex; justify-content: space-between; padding: 8px 0; border-top: 1px solid var(--border); }
+  .row:first-of-type { border-top: 0; }
+  .row .k { color: var(--muted); }
+  .row .v { font-family: var(--mono); }
+  .big { font-family: var(--mono); font-size: 28px; margin: 4px 0 12px 0; }
+  .trend-up { color: var(--hot); }
+  .trend-down { color: var(--ok); }
+  .trend-flat { color: var(--muted); }
+  svg.spark { display: block; width: 100%; height: 36px; margin-top: 8px; }
+  footer { padding: 24px 32px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--border); margin-top: 48px; }
+  footer code { font-family: var(--mono); }
+  .warn-banner { background: #2a200e; border: 1px solid #4a3815; color: var(--warn); padding: 10px 14px; border-radius: 8px; font-size: 12px; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>gas-oracle<span class="dot">.</span> <span style="color:var(--muted);font-weight:400">L2 gas dashboard</span></h1>
+    <p>Live blob-fee and L2 gas prediction across Arbitrum, Optimism, Base, Scroll.</p>
+  </div>
+  <div style="display:flex;gap:14px;align-items:center">
+    <span id="refreshBadge" class="chip">—</span>
+    <a href="https://github.com/kcolbchain/gas-oracle">source</a>
+    <a href="https://docs.kcolbchain.com/gas-oracle/">docs</a>
+  </div>
+</header>
+
+<main>
+  <div id="rpcWarn" class="warn-banner" hidden>
+    Public RPC endpoints are rate-limited. For production, pass your own RPC via <code>?rpc=https://…</code> per chain, or <code>?l1rpc=https://…</code> for the L1 blob-fee source.
+  </div>
+
+  <div class="l1-bar" id="l1Bar">
+    <div class="metric">
+      <span class="label">L1 block</span>
+      <span class="value" id="l1Block">—</span>
+    </div>
+    <div class="metric">
+      <span class="label">L1 base fee</span>
+      <span class="value" id="l1BaseFee">— <small style="color:var(--muted)">gwei</small></span>
+    </div>
+    <div class="metric">
+      <span class="label">Blob base fee</span>
+      <span class="value" id="l1BlobFee">— <small style="color:var(--muted)">gwei</small></span>
+    </div>
+    <div class="metric">
+      <span class="label">Excess blob gas</span>
+      <span class="value" id="l1ExcessBlob">—</span>
+    </div>
+    <div class="metric">
+      <span class="label">Last update</span>
+      <span class="value" id="l1Updated">—</span>
+    </div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+</main>
+
+<footer>
+  Prices polled every 12s from public RPCs; the 10-block prediction uses exponential smoothing over the in-memory window
+  (<code>α = 0.3</code>). This is a preview of the full
+  <a href="https://github.com/kcolbchain/gas-oracle">gas-oracle</a> library, which uses EMA + linear regression over a
+  50-block history window and returns a confidence interval. Blob-fee formula follows
+  <a href="https://eips.ethereum.org/EIPS/eip-4844">EIP-4844</a>:
+  <code>blob_base_fee = fake_exponential(MIN_BASE_FEE_PER_BLOB_GAS, excess_blob_gas, BLOB_BASE_FEE_UPDATE_FRACTION)</code>.
+</footer>
+
+<script>
+// ------------------------------------------------------------ config
+const CHAINS = [
+  { id: 'arbitrum', name: 'Arbitrum One',  rpc: 'https://arb1.arbitrum.io/rpc',    explorer: 'https://arbiscan.io',  color: '#2D374B' },
+  { id: 'optimism', name: 'Optimism',      rpc: 'https://mainnet.optimism.io',     explorer: 'https://optimistic.etherscan.io', color: '#FF0420' },
+  { id: 'base',     name: 'Base',          rpc: 'https://mainnet.base.org',        explorer: 'https://basescan.org', color: '#0052FF' },
+  { id: 'scroll',   name: 'Scroll',        rpc: 'https://rpc.scroll.io',           explorer: 'https://scrollscan.com', color: '#FFEEDA' },
+];
+const L1_RPC_DEFAULT = 'https://eth.llamarpc.com';
+const POLL_MS = 12_000;
+const WINDOW = 50;           // keep up to 50 samples per chain
+const EMA_ALPHA = 0.3;
+
+const qs = new URLSearchParams(location.search);
+const L1_RPC = qs.get('l1rpc') || L1_RPC_DEFAULT;
+for (const c of CHAINS) {
+  const override = qs.get('rpc_' + c.id) || qs.get('rpc');
+  if (override) c.rpc = override;
+}
+
+// ------------------------------------------------------------ state
+const history = Object.fromEntries(CHAINS.map(c => [c.id, []]));   // { chainId: [gwei,...] }
+
+// ------------------------------------------------------------ rpc
+async function rpc(url, method, params = []) {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+  });
+  if (!res.ok) throw new Error(method + ' ' + res.status);
+  const json = await res.json();
+  if (json.error) throw new Error(method + ' ' + json.error.message);
+  return json.result;
+}
+
+// ------------------------------------------------------------ eip-4844
+// fake_exponential from EIP-4844, approximates e^(x/denom) * factor.
+function fakeExponential(factor, numerator, denominator) {
+  let output = 0n;
+  let term = factor * 1n;
+  let i = 1n;
+  while (term > 0n) {
+    output += term;
+    term = (term * numerator) / (denominator * i);
+    i += 1n;
+    if (i > 128n) break;
+  }
+  return output / denominator;
+}
+const MIN_BLOB_BASE_FEE = 1n;            // wei
+const BLOB_BASE_FEE_UPDATE_FRACTION = 3338477n;
+function blobBaseFeeFromExcess(excessBlobGas) {
+  return fakeExponential(MIN_BLOB_BASE_FEE, excessBlobGas, BLOB_BASE_FEE_UPDATE_FRACTION);
+}
+
+// ------------------------------------------------------------ formatting
+const weiPerGwei = 1_000_000_000n;
+const toGwei = (weiBig) => Number(weiBig) / 1e9;
+function fmt(n, d = 4) {
+  if (!Number.isFinite(n)) return '—';
+  if (n >= 100) return n.toFixed(1);
+  if (n >= 1)   return n.toFixed(2);
+  return n.toFixed(d);
+}
+
+// ------------------------------------------------------------ ui
+function card(c) {
+  return `
+    <div class="card" data-chain="${c.id}" style="border-top: 2px solid ${c.color}">
+      <header>
+        <h2>${c.name}</h2>
+        <span class="chip" data-role="status">idle</span>
+      </header>
+      <div class="big" data-role="price">— <small style="color:var(--muted);font-size:14px">gwei</small></div>
+      <svg class="spark" data-role="spark" viewBox="0 0 100 36" preserveAspectRatio="none"></svg>
+      <div class="row"><span class="k">block</span><span class="v" data-role="block">—</span></div>
+      <div class="row"><span class="k">predicted (10 blk)</span><span class="v" data-role="pred">—</span></div>
+      <div class="row"><span class="k">trend</span><span class="v" data-role="trend">—</span></div>
+    </div>`;
+}
+document.getElementById('grid').innerHTML = CHAINS.map(card).join('');
+
+function drawSpark(el, points) {
+  if (!points.length) { el.innerHTML = ''; return; }
+  const min = Math.min(...points), max = Math.max(...points);
+  const span = max - min || 1;
+  const step = 100 / Math.max(1, points.length - 1);
+  const d = points.map((v, i) => `${i === 0 ? 'M' : 'L'} ${(i * step).toFixed(2)} ${(36 - ((v - min) / span) * 34 - 1).toFixed(2)}`).join(' ');
+  el.innerHTML = `<path d="${d}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />`;
+}
+
+function ema(series, alpha = EMA_ALPHA) {
+  if (!series.length) return NaN;
+  let v = series[0];
+  for (let i = 1; i < series.length; i++) v = alpha * series[i] + (1 - alpha) * v;
+  return v;
+}
+
+function setStatus(card, state, label) {
+  const el = card.querySelector('[data-role=status]');
+  el.className = 'chip ' + (state === 'ok' ? 'live' : state === 'err' ? 'err' : '');
+  el.textContent = label;
+}
+
+// ------------------------------------------------------------ polling
+async function tickL1() {
+  try {
+    const blk = await rpc(L1_RPC, 'eth_getBlockByNumber', ['latest', false]);
+    const base = BigInt(blk.baseFeePerGas || '0x0');
+    const excess = BigInt(blk.excessBlobGas || '0x0');
+    const blob = blobBaseFeeFromExcess(excess);
+    document.getElementById('l1Block').textContent = parseInt(blk.number, 16).toLocaleString();
+    const baseGwei = toGwei(base);
+    const blobGwei = toGwei(blob);
+    document.getElementById('l1BaseFee').innerHTML = fmt(baseGwei) + ' <small style="color:var(--muted)">gwei</small>';
+    document.getElementById('l1BlobFee').innerHTML = fmt(blobGwei, 6) + ' <small style="color:var(--muted)">gwei</small>';
+    document.getElementById('l1ExcessBlob').textContent = excess.toString();
+    document.getElementById('l1Updated').textContent = new Date().toLocaleTimeString();
+    // color the blob-fee badge
+    const blobEl = document.getElementById('l1BlobFee');
+    blobEl.className = 'value ' + (blobGwei > 50 ? 'hot' : blobGwei > 5 ? 'warn' : 'ok');
+    document.getElementById('rpcWarn').hidden = true;
+  } catch (e) {
+    document.getElementById('rpcWarn').hidden = false;
+    document.getElementById('l1Updated').textContent = 'RPC error';
+  }
+}
+
+async function tickChain(c) {
+  const el = document.querySelector(`[data-chain=${c.id}]`);
+  setStatus(el, 'idle', '…');
+  try {
+    const [blk, gasPrice] = await Promise.all([
+      rpc(c.rpc, 'eth_blockNumber', []),
+      rpc(c.rpc, 'eth_gasPrice', []),
+    ]);
+    const gwei = toGwei(BigInt(gasPrice));
+    const hist = history[c.id];
+    hist.push(gwei);
+    if (hist.length > WINDOW) hist.shift();
+
+    el.querySelector('[data-role=price]').innerHTML = fmt(gwei) + ' <small style="color:var(--muted);font-size:14px">gwei</small>';
+    el.querySelector('[data-role=block]').textContent = parseInt(blk, 16).toLocaleString();
+    const predicted = ema(hist);
+    el.querySelector('[data-role=pred]').textContent = fmt(predicted) + ' gwei';
+
+    let trend = 'trend-flat', trendLabel = 'flat';
+    if (hist.length >= 3) {
+      const recent = hist.slice(-3).reduce((a, b) => a + b, 0) / 3;
+      const older = hist.slice(-6, -3);
+      if (older.length) {
+        const olderAvg = older.reduce((a, b) => a + b, 0) / older.length;
+        const pct = ((recent - olderAvg) / olderAvg) * 100;
+        if (pct > 2)       { trend = 'trend-up';   trendLabel = '▲ ' + pct.toFixed(1) + '%'; }
+        else if (pct < -2) { trend = 'trend-down'; trendLabel = '▼ ' + Math.abs(pct).toFixed(1) + '%'; }
+        else               { trendLabel = '≈ ' + pct.toFixed(1) + '%'; }
+      }
+    }
+    const trendEl = el.querySelector('[data-role=trend]');
+    trendEl.className = 'v ' + trend;
+    trendEl.textContent = trendLabel;
+
+    drawSpark(el.querySelector('[data-role=spark]'), hist);
+    setStatus(el, 'ok', 'live');
+  } catch (e) {
+    setStatus(el, 'err', 'rpc err');
+  }
+}
+
+async function tick() {
+  document.getElementById('refreshBadge').textContent = 'refreshing…';
+  await Promise.all([tickL1(), ...CHAINS.map(tickChain)]);
+  document.getElementById('refreshBadge').textContent = 'updated ' + new Date().toLocaleTimeString();
+}
+
+tick();
+setInterval(tick, POLL_MS);
+</script>
+</body>
+</html>
