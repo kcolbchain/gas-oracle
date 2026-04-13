@@ -21,6 +21,14 @@ npm run build
 npx gas-oracle predict --chain arbitrum --blocks 10
 ```
 
+## Live dashboard
+
+A zero-build static dashboard lives in [`web/`](web/). Run it locally with
+`python3 -m http.server -d web 8080` — it polls public RPCs every 12s and
+shows the L1 blob-fee driver plus a predicted L2 gas price per chain. See
+[`web/README.md`](web/README.md) for custom-RPC configuration and deploy
+notes.
+
 ## How it works
 
 1. Fetches recent L1 blob base fees and L2 gas prices via RPC
