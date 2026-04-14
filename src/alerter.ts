@@ -9,3 +9,19 @@ export async function checkAndAlert(blobFee: number, threshold: number, chatId: 
     lastAlertTime = now;
   }
 }
+async function sendTelegram(chatId: string, fee: number) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+
+  const url = `https://api.telegram.org/bot${token}/sendMessage`;
+
+  await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text: `⚠️ Blob fee alert: ${fee} gwei exceeded threshold`
+    })
+  });
+}
