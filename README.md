@@ -72,4 +72,4 @@ MIT
 
 ## Contributing
 
-Issues and PRs welcome. See the [kcolbchain contributing guide](https://github.com/kcolbchain).
+Issues and PRs welcome. See the [kcolbchain contributing guide](CONTRIBUTING.md).
