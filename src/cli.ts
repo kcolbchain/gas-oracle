@@ -2,7 +2,7 @@
 #!/usr/bin/env node
 import { Command } from 'commander'
 import { GasOracle } from './oracle'
-import { AccuracyTracker } from './tracker' // Import new tracker
+import { AccuracyTracker } from './tracker'
 import type { ChainName } from './types'
 
 const program = new Command()
@@ -10,19 +10,20 @@ const program = new Command()
 program
   .name('gas-oracle')
   .description('Predict L2 gas costs using blob fee market dynamics')
-  .version('0.2.0') // Bump version for new feature
+  .version('0.2.0')
 
 const l2RpcDefaults: Record<string, string> = {
   arbitrum: 'https://arb1.arbitrum.io/rpc',
   optimism: 'https://mainnet.optimism.io',
   base: 'https://mainnet.base.org',
   scroll: 'https://rpc.scroll.io',
+  zksync: 'https://mainnet.era.zksync.io',
 }
 
 program
   .command('predict')
   .description('Predict gas costs N blocks ahead')
-  .requiredOption('--chain <chain>', 'Target chain: arbitrum, optimism, base, scroll')
+  .requiredOption('--chain <chain>', 'Target chain: arbitrum, optimism, base, scroll, zksync')
   .option('--blocks <n>', 'Blocks ahead to predict', '10')
   .option('--l1-rpc <url>', 'L1 Ethereum RPC URL', 'https://eth.llamarpc.com')
   .option('--l2-rpc <url>', 'L2 RPC URL')
@@ -53,7 +54,7 @@ program
 program
   .command('accuracy')
   .description('Compute historical prediction accuracy')
-  .requiredOption('--chain <chain>', 'Target chain: arbitrum, optimism, base, scroll')
+  .requiredOption('--chain <chain>', 'Target chain: arbitrum, optimism, base, scroll, zksync')
   .requiredOption('--last <n>', 'Number of historical blocks to evaluate (e.g., 100)')
   .option('--blocks <n>', 'Blocks ahead the prediction was made for (N blocks later)', '10')
   .option('--l1-rpc <url>', 'L1 Ethereum RPC URL', 'https://eth.llamarpc.com')
