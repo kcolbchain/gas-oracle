@@ -1,4 +1,5 @@
 # gas-oracle
+[![repo](https://img.shields.io/badge/repo-gas-oracle-blue)](https://github.com/kcolbchain/gas-oracle)
 
 Predicts L2 gas costs 5-30 blocks ahead using blob fee market dynamics post-EIP-4844. By [kcolbchain](https://kcolbchain.com) (est. 2015).
 
