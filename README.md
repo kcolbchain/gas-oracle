@@ -12,6 +12,7 @@ After EIP-4844, L2 transaction costs are driven by the L1 blob base fee — a vo
 - Optimism
 - Base
 - Scroll
+- zkSync Era
 
 ## Quick start
 
@@ -65,6 +66,23 @@ Chain adapter → applies chain-specific L2 fee formula
     ↓
 Prediction { gasPrice, blobFee, confidence, blocksAhead }
 ```
+
+## Alerting
+
+Monitor blob fees and get Telegram alerts when they spike above a configurable
+threshold:
+
+```bash
+export TELEGRAM_BOT_TOKEN=<your-bot-token>
+
+npx gas-oracle alert \
+  --chain arbitrum \
+  --blob-threshold 50 \
+  --telegram-chat <chat-id>
+```
+
+The alerter polls every 60 seconds (configurable with `--interval`) and
+respects a 10-minute cooldown per spike to avoid notification spam.
 
 ## License
 

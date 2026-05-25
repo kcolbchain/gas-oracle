@@ -2,7 +2,8 @@
 #!/usr/bin/env node
 import { Command } from 'commander'
 import { GasOracle } from './oracle'
-import { AccuracyTracker } from './tracker' // Import new tracker
+import { AccuracyTracker } from './tracker'
+import { checkAndAlert } from './alerter'
 import type { ChainName } from './types'
 
 const program = new Command()
@@ -17,12 +18,13 @@ const l2RpcDefaults: Record<string, string> = {
   optimism: 'https://mainnet.optimism.io',
   base: 'https://mainnet.base.org',
   scroll: 'https://rpc.scroll.io',
+  zksync: 'https://mainnet.era.zksync.io',
 }
 
 program
   .command('predict')
   .description('Predict gas costs N blocks ahead')
-  .requiredOption('--chain <chain>', 'Target chain: arbitrum, optimism, base, scroll')
+  .requiredOption('--chain <chain>', 'Target chain: arbitrum, optimism, base, scroll, zksync')
   .option('--blocks <n>', 'Blocks ahead to predict', '10')
   .option('--l1-rpc <url>', 'L1 Ethereum RPC URL', 'https://eth.llamarpc.com')
   .option('--l2-rpc <url>', 'L2 RPC URL')
@@ -53,7 +55,7 @@ program
 program
   .command('accuracy')
   .description('Compute historical prediction accuracy')
-  .requiredOption('--chain <chain>', 'Target chain: arbitrum, optimism, base, scroll')
+  .requiredOption('--chain <chain>', 'Target chain: arbitrum, optimism, base, scroll, zksync')
   .requiredOption('--last <n>', 'Number of historical blocks to evaluate (e.g., 100)')
   .option('--blocks <n>', 'Blocks ahead the prediction was made for (N blocks later)', '10')
   .option('--l1-rpc <url>', 'L1 Ethereum RPC URL', 'https://eth.llamarpc.com')
@@ -90,6 +92,51 @@ program
       console.error(`Error: ${err.message}`)
       process.exit(1)
     }
+  })
+
+program
+  .command('alert')
+  .description('Monitor blob fee and send Telegram alert when it exceeds threshold')
+  .requiredOption('--chain <chain>', 'Target chain: arbitrum, optimism, base, scroll, zksync')
+  .option('--blob-threshold <gwei>', 'Blob fee threshold in gwei', '50')
+  .requiredOption('--telegram-chat <id>', 'Telegram chat ID for alerts')
+  .option('--l1-rpc <url>', 'L1 Ethereum RPC URL', 'https://eth.llamarpc.com')
+  .option('--l2-rpc <url>', 'L2 RPC URL')
+  .option('--interval <ms>', 'Polling interval in ms', '60000')
+  .action(async (opts) => {
+    const chain = opts.chain as ChainName
+    const threshold = parseFloat(opts.blobThreshold)
+    const chatId = opts.telegramChat
+
+    if (!process.env.TELEGRAM_BOT_TOKEN) {
+      console.error('Error: TELEGRAM_BOT_TOKEN environment variable not set')
+      process.exit(1)
+    }
+
+    const oracle = new GasOracle({
+      l1Rpc: opts.l1Rpc,
+      l2Rpc: opts.l2Rpc || l2RpcDefaults[chain] || '',
+      chain,
+    })
+
+    console.log(`  Monitoring ${chain} blob fee, threshold: ${threshold} gwei`)
+    console.log(`  Polling every ${opts.interval}ms, alerts to chat ${chatId}`)
+    console.log('  Press Ctrl+C to stop\n')
+
+    const poll = async () => {
+      try {
+        const prediction = await oracle.predict({ blocksAhead: 1 })
+        const currentBlobFee = prediction.blobFee
+        console.log(`  [${new Date().toISOString()}] Blob fee: ${currentBlobFee.toFixed(2)} gwei`)
+
+        await checkAndAlert(currentBlobFee, threshold, chatId)
+      } catch (err: any) {
+        console.error(`  Error: ${err.message}`)
+      }
+    }
+
+    await poll()
+    setInterval(poll, parseInt(opts.interval))
   })
 
 program.parse()
