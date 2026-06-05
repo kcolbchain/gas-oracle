@@ -18,12 +18,15 @@ const l2RpcDefaults: Record<string, string> = {
   base: 'https://mainnet.base.org',
   scroll: 'https://rpc.scroll.io',
   zksync: 'https://mainnet.era.zksync.io',
+  polygonzkevm: 'https://zkevm-rpc.com',
+  blast: 'https://rpc.blast.io',
+  mantle: 'https://rpc.mantle.xyz',
 }
 
 program
   .command('predict')
   .description('Predict gas costs N blocks ahead')
-  .requiredOption('--chain <chain>', 'Target chain: arbitrum, optimism, base, scroll, zksync')
+  .requiredOption('--chain <chain>', 'Target chain: arbitrum, optimism, base, scroll, zksync, polygonzkevm, blast, mantle')
   .option('--blocks <n>', 'Blocks ahead to predict', '10')
   .option('--l1-rpc <url>', 'L1 Ethereum RPC URL', 'https://eth.llamarpc.com')
   .option('--l2-rpc <url>', 'L2 RPC URL')
@@ -54,7 +57,7 @@ program
 program
   .command('accuracy')
   .description('Compute historical prediction accuracy')
-  .requiredOption('--chain <chain>', 'Target chain: arbitrum, optimism, base, scroll, zksync')
+  .requiredOption('--chain <chain>', 'Target chain: arbitrum, optimism, base, scroll, zksync, polygonzkevm, blast, mantle')
   .requiredOption('--last <n>', 'Number of historical blocks to evaluate (e.g., 100)')
   .option('--blocks <n>', 'Blocks ahead the prediction was made for (N blocks later)', '10')
   .option('--l1-rpc <url>', 'L1 Ethereum RPC URL', 'https://eth.llamarpc.com')
