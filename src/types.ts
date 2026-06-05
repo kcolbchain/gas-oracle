@@ -1,6 +1,6 @@
-export type ChainName = 'arbitrum' | 'optimism' | 'base' | 'scroll' | 'zksync';
+export type ChainName = 'arbitrum' | 'optimism' | 'base' | 'scroll' | 'zksync' | 'polygonzkevm' | 'blast' | 'mantle';
 
-export const VALID_CHAINS: ChainName[] = ['arbitrum', 'optimism', 'base', 'scroll', 'zksync'];
+export const VALID_CHAINS: ChainName[] = ['arbitrum', 'optimism', 'base', 'scroll', 'zksync', 'polygonzkevm', 'blast', 'mantle'];
 
 export interface OracleConfig {
   l1Rpc: string;

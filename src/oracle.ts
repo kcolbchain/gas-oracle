@@ -4,9 +4,12 @@ import { arbitrum } from './chains/arbitrum'
 import { optimism, base } from './chains/optimism'
 import { scroll } from './chains/scroll'
 import { zksync } from './chains/zksync'
+import { polygonzkevm } from './chains/polygonzkevm'
+import { blast } from './chains/blast'
+import { mantle } from './chains/mantle'
 import type { OracleConfig, Prediction, ChainAdapter, ChainName } from './types'
 
-const adapters: Record<ChainName, ChainAdapter> = { arbitrum, optimism, base, scroll, zksync }
+const adapters: Record<ChainName, ChainAdapter> = { arbitrum, optimism, base, scroll, zksync, polygonzkevm, blast, mantle }
 
 export class GasOracle {
   private fetcher: FeeFetcher
