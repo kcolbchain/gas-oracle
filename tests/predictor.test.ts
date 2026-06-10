@@ -239,13 +239,13 @@ describe('Predictor', () => {
       const values = [1, 3, 2, 4, 3] // Scattered data
       const { slope, intercept, r2 } = predictor['linearRegression'](values)
 
-      // Expected values for this dataset (x=[0,1,2,3,4], y=[1,3,2,4,3]):
-      // Slope: 0.6
-      // Intercept: 1.6
-      // R2: 0.6
-      expect(slope).toBeCloseTo(0.6, 6)
+      // OLS for x=[0,1,2,3,4], y=[1,3,2,4,3]:
+      //   slope     = sum((x-x̄)(y-ȳ)) / sum((x-x̄)²) = 5.0 / 10 = 0.5
+      //   intercept = ȳ - slope * x̄                  = 2.6 - 0.5*2 = 1.6
+      //   r²        = 1 - ssRes/ssTot                 = 1 - 2.7/5.2 ≈ 0.481
+      expect(slope).toBeCloseTo(0.5, 6)
       expect(intercept).toBeCloseTo(1.6, 6)
-      expect(r2).toBeCloseTo(0.6, 6)
+      expect(r2).toBeCloseTo(0.4808, 3)
     })
 
     it('should handle single data point (n=1) case', () => {

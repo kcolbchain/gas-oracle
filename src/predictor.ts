@@ -82,7 +82,9 @@ export class Predictor {
       ssTot += (values[i] - meanY) ** 2
       ssRes += (values[i] - (slope * i + intercept)) ** 2
     }
-    const r2 = ssTot === 0 ? 0 : 1 - ssRes / ssTot
+    // ssTot === 0 means all values equal meanY (flat series): the constant
+    // model is a perfect fit, so confidence is maximal.
+    const r2 = ssTot === 0 ? 1 : 1 - ssRes / ssTot
 
     return { slope, intercept, r2 }
   }
